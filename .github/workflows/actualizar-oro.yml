@@ -2,8 +2,9 @@ name: Actualizar cotización del oro
 
 on:
   schedule:
+    # 07:00 UTC todos los días (~09:00 hora de España en verano, 08:00 en invierno)
     - cron: '0 7 * * *'
-  workflow_dispatch: {}
+  workflow_dispatch: {}   # permite lanzarlo a mano desde la pestaña "Actions"
 
 permissions:
   contents: write
@@ -29,4 +30,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add historico.json
           git diff --cached --quiet || git commit -m "Actualiza cotización del oro $(date -u +%Y-%m-%d)"
+          git pull --rebase origin main
           git push
