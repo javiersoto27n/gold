@@ -3,7 +3,7 @@ name: Actualizar cotización del oro
 on:
   schedule:
     # Cada 2 horas (en horas pares UTC: 0,2,4...22), solo de lunes a viernes
-    - cron: '0 */2 * * 1-5'
+    - cron: '7 */2 * * 1-5'
   workflow_dispatch: {}   # permite lanzarlo a mano desde la pestaña "Actions"
 
 permissions:
