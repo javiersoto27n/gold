@@ -4,13 +4,26 @@
     "precioGramoEur": 127.61,
     "precioOnzaEur": 3969.1147,
     "origen": "manual (compra lingote 5g, 08:15)",
-    "computedAt": "2026-08-27T06:15:00Z"
+    "computedAt": "2026-08-27T06:15:00Z",
+    "hora": "06:15",
+    "timestamp": "2026-08-27T06:15:00Z"
+  },
+  {
+    "fecha": "2026-08-27",
+    "hora": "18:00",
+    "timestamp": "2026-08-27T18:00:00Z",
+    "precioGramoEur": 127.1236,
+    "precioOnzaEur": 3953.986,
+    "origen": "goldprice.dev",
+    "computedAt": "2026-08-27T19:32:47Z"
   },
   {
     "fecha": "2026-08-28",
     "precioGramoEur": 126.89,
     "precioOnzaEur": 3946.7202,
     "origen": "manual (compra lingote 5g, 14:15)",
-    "computedAt": "2026-08-28T12:15:00Z"
+    "computedAt": "2026-08-28T12:15:00Z",
+    "hora": "12:15",
+    "timestamp": "2026-08-28T12:15:00Z"
   }
 ]
