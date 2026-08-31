@@ -133,7 +133,9 @@
   .pl-amount.flat{ color:var(--text); }
   .stats{
     display:flex;
+    flex-wrap:wrap;
     gap:18px;
+    row-gap:8px;
     margin-bottom:14px;
     font-size:12px;
     color:var(--text-muted);
@@ -275,6 +277,7 @@
   <div class="stats">
     <div>Gramos<b id="gramsDisplay">&mdash;</b></div>
     <div>Precio/gramo<b id="pricePerGram">&mdash;</b></div>
+    <div>Precio medio compra<b id="avgBuyPrice">&mdash;</b></div>
     <div>Actualizado<b id="lastUpdated">&mdash;</b></div>
   </div>
 
@@ -313,6 +316,7 @@
     plValue: document.getElementById("plValue"),
     gramsDisplay: document.getElementById("gramsDisplay"),
     pricePerGram: document.getElementById("pricePerGram"),
+    avgBuyPrice: document.getElementById("avgBuyPrice"),
     lastUpdated: document.getElementById("lastUpdated"),
     chartHost: document.getElementById("chartHost"),
     chartLegend: document.getElementById("chartLegend"),
@@ -504,6 +508,7 @@
     els.pricePerGram.textContent = fmtEUR4(current.pricePerGram);
     els.lastUpdated.textContent = new Date(current.computedAt).toLocaleString("es-ES", {dateStyle:"short", timeStyle:"short"});
     els.gramsDisplay.textContent = tieneCompras ? (g + " g (" + compras.length + (compras.length===1?" lingote)":" lingotes)")) : "sin datos";
+    els.avgBuyPrice.textContent = tieneCompras ? (fmtEUR4(invertidoTotal() / g) + "/g") : "sin datos";
 
     if(tieneCompras){
       var invertido = invertidoTotal();
