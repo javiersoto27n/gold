@@ -1726,5 +1726,14 @@
     "precioOnzaEur": 3766.5087,
     "origen": "goldprice.dev",
     "computedAt": "2026-09-22T06:07:17Z"
+  },
+  {
+    "fecha": "2026-09-22",
+    "hora": "08:00",
+    "timestamp": "2026-09-22T08:00:00Z",
+    "precioGramoEur": 121.0183,
+    "precioOnzaEur": 3764.0912,
+    "origen": "goldprice.dev",
+    "computedAt": "2026-09-22T08:07:18Z"
   }
 ]
