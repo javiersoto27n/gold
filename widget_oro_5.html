@@ -385,16 +385,18 @@
 
   function buildSeries(){
     // Une historico + compras: para cada punto (puede haber varios al día),
-    // cuánto oro tenías ese día y cuánto llevabas invertido hasta esa fecha.
+    // el precio spot de ese momento y tu precio medio de compra acumulado
+    // hasta esa fecha (ambos en EUR/gramo, para que no den saltos al
+    // añadir compras nuevas — solo cambia el importe total, no el precio).
     return history.map(function(h){
       var g = gramosHasta(h.date);
+      var invertido = invertidoHasta(h.date);
       return {
         date: h.date,
         timestamp: h.timestamp,
         pricePerGram: h.pricePerGram,
         gramos: g,
-        marketValue: h.pricePerGram * g,
-        investedValue: invertidoHasta(h.date)
+        avgBuyPrice: g > 0 ? (invertido / g) : null
       };
     });
   }
@@ -415,8 +417,19 @@
     var points = truncado ? pointsCompletos.slice(-MAX_CHART_POINTS) : pointsCompletos;
     var w = 400, h = 130, padL = 4, padR = 4, padT = 10, padB = 18;
 
-    var allValues = points.map(function(p){ return p.marketValue; });
-    if(tieneCompras){ allValues = allValues.concat(points.map(function(p){ return p.investedValue; })); }
+    // El precio medio de compra solo existe desde el punto en que ya tenías
+    // alguna compra registrada (gramos > 0); antes de eso se omite esa línea
+    // en vez de forzar un cero, para no distorsionar la escala del gráfico.
+    var avgDefinedFrom = -1;
+    if(tieneCompras){
+      for(var idx=0; idx<points.length; idx++){
+        if(points[idx].avgBuyPrice !== null && points[idx].avgBuyPrice !== undefined){ avgDefinedFrom = idx; break; }
+      }
+    }
+    var hasAvgLine = avgDefinedFrom !== -1;
+
+    var allValues = points.map(function(p){ return p.pricePerGram; });
+    if(hasAvgLine){ allValues = allValues.concat(points.slice(avgDefinedFrom).map(function(p){ return p.avgBuyPrice; })); }
     var min = Math.min.apply(null, allValues), max = Math.max.apply(null, allValues);
     if(min === max){ min -= 1; max += 1; }
     var pad = (max - min) * 0.08;
@@ -427,7 +440,7 @@
     function x(i){ return padL + i*stepX; }
     function y(v){ return padT + (1 - (v - min)/range) * (h - padT - padB); }
 
-    var marketPath = points.map(function(p,i){ return (i===0?"M":"L") + x(i).toFixed(1) + " " + y(p.marketValue).toFixed(1); }).join(" ");
+    var marketPath = points.map(function(p,i){ return (i===0?"M":"L") + x(i).toFixed(1) + " " + y(p.pricePerGram).toFixed(1); }).join(" ");
 
     var gridLines = "";
     for(var g=0; g<=2; g++){
@@ -436,20 +449,22 @@
     }
 
     var investedPath = "", bandPath = "", bandClass = "up";
-    if(tieneCompras){
-      investedPath = points.map(function(p,i){ return (i===0?"M":"L") + x(i).toFixed(1) + " " + y(p.investedValue).toFixed(1); }).join(" ");
-      var reversed = points.slice().reverse().map(function(p,i){
-        var origIndex = points.length - 1 - i;
-        return "L" + x(origIndex).toFixed(1) + " " + y(p.investedValue).toFixed(1);
+    if(hasAvgLine){
+      var avgPts = points.slice(avgDefinedFrom);
+      investedPath = avgPts.map(function(p,i){ return (i===0?"M":"L") + x(avgDefinedFrom+i).toFixed(1) + " " + y(p.avgBuyPrice).toFixed(1); }).join(" ");
+      var marketSubPath = avgPts.map(function(p,i){ return (i===0?"M":"L") + x(avgDefinedFrom+i).toFixed(1) + " " + y(p.pricePerGram).toFixed(1); }).join(" ");
+      var reversed = avgPts.slice().reverse().map(function(p,i){
+        var origIndex = avgPts.length - 1 - i;
+        return "L" + x(avgDefinedFrom+origIndex).toFixed(1) + " " + y(p.avgBuyPrice).toFixed(1);
       }).join(" ");
-      bandPath = marketPath + " " + reversed + " Z";
-      var last = points[points.length-1];
-      bandClass = last.marketValue >= last.investedValue ? "up" : "down";
+      bandPath = marketSubPath + " " + reversed + " Z";
+      var last = avgPts[avgPts.length-1];
+      bandClass = last.pricePerGram >= last.avgBuyPrice ? "up" : "down";
     }
 
     var dotR = points.length > 30 ? 1.5 : 2.5;
     var dots = points.map(function(p,i){
-      return '<circle class="chart-dot" cx="'+x(i).toFixed(1)+'" cy="'+y(p.marketValue).toFixed(1)+'" r="'+dotR+'"><title>'+fmtLabel(p.timestamp)+": "+fmtEUR(p.marketValue)+'</title></circle>';
+      return '<circle class="chart-dot" cx="'+x(i).toFixed(1)+'" cy="'+y(p.pricePerGram).toFixed(1)+'" r="'+dotR+'"><title>'+fmtLabel(p.timestamp)+": "+fmtEUR4(p.pricePerGram)+'/g</title></circle>';
     }).join("");
 
     var firstLabel = fmtLabel(points[0].timestamp);
@@ -458,8 +473,8 @@
     var svg = ''+
       '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">' +
         gridLines +
-        (tieneCompras ? '<path class="chart-area '+bandClass+'" d="'+bandPath+'"/>' : '') +
-        (tieneCompras ? '<path class="invested-line" d="'+investedPath+'"/>' : '') +
+        (hasAvgLine ? '<path class="chart-area '+bandClass+'" d="'+bandPath+'"/>' : '') +
+        (hasAvgLine ? '<path class="invested-line" d="'+investedPath+'"/>' : '') +
         '<path class="chart-line" d="'+marketPath+'"/>' +
         dots +
         '<text class="axis-label" x="'+padL+'" y="'+(h-4)+'">'+firstLabel+'</text>' +
@@ -521,7 +536,7 @@
       els.plValue.textContent = (pl > 0 ? "+" : "") + fmtEUR(pl) + " (" + (pl>0?"+":"") + plPct.toFixed(1) + "%)";
       els.plRow.style.display = "";
       els.subline.textContent = g + " g de oro (999.9) al precio spot actual";
-      els.chartLegend.innerHTML = 'Valor de mercado vs. invertido (EUR) <span class="legend-dot legend-value"></span>valor <span class="legend-dot legend-invested"></span>invertido';
+      els.chartLegend.innerHTML = 'Precio spot vs. tu precio medio de compra (EUR/g) <span class="legend-dot legend-value"></span>spot <span class="legend-dot legend-invested"></span>medio compra';
     } else {
       els.plRow.style.display = "none";
       els.subline.textContent = "Sin datos de compras (compras.json). Mostrando solo cotización.";
